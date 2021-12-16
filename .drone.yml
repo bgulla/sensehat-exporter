@@ -1,0 +1,68 @@
+---
+## arm64 Docker Build
+kind: pipeline
+type: docker
+name: arm-build
+
+platform:
+  os: linux
+  arch: arm
+
+steps:
+
+- name: build-publish   
+  image: plugins/docker
+  settings:
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+    repo: bgulla/sensehat-prom-exporter
+    auto_tag: true
+    auto_tag_suffix: drone-build-arm
+
+---
+## arm64 Docker Build
+kind: pipeline
+type: docker
+name: arm64-build
+
+platform:
+  os: linux
+  arch: arm64
+
+steps:
+
+- name: build-publish   
+  image: plugins/docker
+  settings:
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+    repo: bgulla/sensehat-prom-exporter
+    auto_tag: true
+    auto_tag_suffix: drone-build-arm64
+    
+---
+## Docker Manifest Step- combines both architectures into a multi-tagged image. The docker client will pull the appropriate image based on the client's architecture.
+kind: pipeline
+name: default
+
+steps:
+- name: manifest
+  image: plugins/manifest
+  settings:
+    username: 
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+    target: bgulla/sensehat-prom-exporter:latest
+    template: bgulla/sensehat-prom-exporter:drone-build-ARCH
+    platforms:
+      - linux/arm64
+      - linux/arm
+depends_on:
+#- amd64-build
+- arm64-build
+- arm-build
